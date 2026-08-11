@@ -1,0 +1,7 @@
+pandas
+openpyxl
+matplotlib
+graphviz
+jupyter
+nbconvert
+ipykernel

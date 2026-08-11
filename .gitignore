@@ -1,0 +1,12 @@
+# Large generated data files — regenerate locally via the notebook/SQL scripts
+# rather than committing to git (GitHub blocks pushes over 100MB, warns over 50MB).
+online_retail.db
+data/Online_Retail_Cleaned.csv
+exports/Online_Retail_Cleaned.xlsx
+
+# Keep the raw source CSV out of git too — link to the UCI source in the README instead
+data/Online_Retail_Raw.csv
+
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
