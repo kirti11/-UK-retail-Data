@@ -4,9 +4,9 @@
 
 ## Client Background
 
-This analysis covers a **UK-based, non-store online retailer** that sells unique all-occasion gift and homeware items — think decorative lighting, storage tins, party supplies, and novelty homeware. A large share of the customer base are **wholesalers** buying in bulk rather than individual shoppers, which shapes several of the patterns below.
+This analysis covers a **UK-based, non-store online retailer** that sells unique all-occasion gift and homeware items think decorative lighting, storage tins, party supplies, and novelty homeware. A large share of the customer base are **wholesalers** buying in bulk rather than individual shoppers, which shapes several of the patterns below.
 
-The dataset captures **541,909 raw transaction lines** across **25,897 invoices**, **4,372 registered customers**, and **38 countries**, spanning **01 December 2010 to 09 December 2011** (a single 13-month trading window — there is no prior year to compare against, so this report focuses on within-year seasonality rather than year-over-year growth).
+The dataset captures **541,909 raw transaction lines** across **25,897 invoices**, **4,372 registered customers**, and **38 countries**, spanning **01 December 2010 to 09 December 2011** (a single 13-month trading window there is no prior year to compare against, so this report focuses on within-year seasonality rather than year-over-year growth).
 
 Reporting to a Head of Operations, this review evaluates sales performance, product performance, customer purchasing behaviour, order cancellations, and regional demand, with the aim of surfacing insights that commercial and operations teams could act on.
 
@@ -31,7 +31,7 @@ Reporting to a Head of Operations, this review evaluates sales performance, prod
 
 ## Dataset Structure and ERD
 
-The raw file is a single flat transaction log (`InvoiceNo, StockCode, Description, Quantity, InvoiceDate, UnitPrice, CustomerID, Country`). For this project I rebuilt it into a **normalized relational schema** in SQLite — six tables, cleaned and joined through SQL — so the analysis reflects how this data would actually live in a production retail database.
+The raw file is a single flat transaction log (`InvoiceNo, StockCode, Description, Quantity, InvoiceDate, UnitPrice, CustomerID, Country`). For this project I rebuilt it into a **normalized relational schema** in SQLite — six tables, cleaned and joined through SQL so the analysis reflects how this data would actually live in a production retail database.
 
 ![ERD](visuals/00_erd.png)
 
@@ -43,14 +43,14 @@ The raw file is a single flat transaction log (`InvoiceNo, StockCode, Descriptio
 - **`order_status`** — lookup table for completed (1) vs. cancelled (2)
 
 **Cleaning steps** (see [`sql/02_cleaning.sql`](sql/02_cleaning.sql)):
-- Removed 3 "bad debt adjustment" invoices (InvoiceNo prefixed `A`) — these are accounting entries, not sales.
+- Removed 3 "bad debt adjustment" invoices (InvoiceNo prefixed `A`) these are accounting entries, not sales.
 - Separated 9,288 cancelled-order lines (InvoiceNo prefixed `C`) into their own status rather than dropping them, so cancellation analysis is possible.
-- Excluded non-merchandise stock codes (`POST`, `DOT`, `M`, `D`, `S`, `AMAZONFEE`, `CRUK`, `PADS`, `B`, `BANK CHARGES`) — postage, manual fees, discounts, and samples — from product-level analysis, but kept them in an `excluded_lines` audit table rather than silently deleting them.
+- Excluded non-merchandise stock codes (`POST`, `DOT`, `M`, `D`, `S`, `AMAZONFEE`, `CRUK`, `PADS`, `B`, `BANK CHARGES`) — postage, manual fees, discounts, and samples from product-level analysis, but kept them in an `excluded_lines` audit table rather than silently deleting them.
 - Dropped lines with zero/negative unit price or zero quantity (data entry errors).
 - Result: **536,636 clean order lines** feeding the analysis, down from 541,909 raw rows.
 
 ### ⚠️ Data Quality Note
-One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an 80,995-unit order worth £168,470 placed on a single invoice (581483) on 9 December 2011, which was **fully cancelled the same day** under a separate invoice (C581484). Because cancellations are tracked as a separate invoice number rather than a status update on the original, this order still counts as "completed" revenue under the original invoice, inflating that product's ranking. I've kept it in the results (rather than silently removing it) and flagged it here — in a live production report, this is exactly the kind of anomaly you'd raise with the data engineering team rather than quietly patch around.
+One line item *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) shows an 80,995-unit order worth £168,470 placed on a single invoice (581483) on 9 December 2011, which was **fully cancelled the same day** under a separate invoice (C581484). Because cancellations are tracked as a separate invoice number rather than a status update on the original, this order still counts as "completed" revenue under the original invoice, inflating that product's ranking. I've kept it in the results (rather than silently removing it) and flagged it here in a live production report, this is exactly the kind of anomaly you'd raise with the data engineering team rather than quietly patch around.
 
 ---
 
@@ -64,11 +64,11 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 
 **Revenue Growth Toward Q4**
 - Revenue climbed each quarter across the year: £1.87M (Q1) → £2.00M (Q2) → £2.45M (Q3) → £3.18M (Q4, through 9 Dec only).
-- November 2011 was the strongest full month on record (£1.46M revenue, 2,751 orders) — consistent with pre-Christmas gift buying.
+- November 2011 was the strongest full month on record (£1.46M revenue, 2,751 orders) consistent with pre-Christmas gift buying.
 - February and April 2011 were the softest months (£509K and £517K), a post-January and post-Easter lull.
 
 **Order Volume Tracks Revenue Closely**
-- Order counts follow the same shape as revenue — growth is being driven by more orders being placed, not by customers spending dramatically more per order.
+- Order counts follow the same shape as revenue growth is being driven by more orders being placed, not by customers spending dramatically more per order.
 - Order count nearly doubled from February (1,093 orders) to November (2,751 orders).
 
 **AOV Is Relatively Stable, With One Notable Spike**
@@ -76,7 +76,7 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 - December 2011's AOV (£754) is the highest in the dataset, but the month is a partial 9-day window and likely skewed by a small number of large wholesale orders rather than a genuine trend.
 - January 2011's AOV (£622) is also elevated relative to neighbouring months, worth a closer look at whether early-year restocking orders from wholesale customers are driving it.
 
-**Caveat:** with only 13 months of data, this report can describe *within-year* seasonality (the Q4 ramp-up) but cannot confirm whether that pattern repeats year over year — a limitation worth stating upfront rather than implying more than the data supports.
+**Caveat:** with only 13 months of data, this report can describe *within-year* seasonality (the Q4 ramp-up) but cannot confirm whether that pattern repeats year over year a limitation worth stating upfront rather than implying more than the data supports.
 
 ---
 
@@ -103,9 +103,9 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 *\*See Data Quality Note — this is a single cancelled bulk order, not a sustained seller.*
 
 **Reading the Quarterly Heat Map**
-- The Regency Cakestand is the only top-5 product with genuinely consistent quarter-over-quarter demand (£27K–£42K every quarter) — it's a dependable core product, not a seasonal one.
-- Party Bunting spikes hard in Q2/Q3 2011 (spring/summer parties and events) and fades by Q4 — a candidate for seasonal inventory planning rather than year-round stocking.
-- The White Hanging Heart T-Light Holder and Jumbo Bag Red Retrospot both show steady, moderate demand with a slight Q1 dip — likely a post-Christmas lull.
+- The Regency Cakestand is the only top-5 product with genuinely consistent quarter-over-quarter demand (£27K–£42K every quarter) it's a dependable core product, not a seasonal one.
+- Party Bunting spikes hard in Q2/Q3 2011 (spring/summer parties and events) and fades by Q4 a candidate for seasonal inventory planning rather than year-round stocking.
+- The White Hanging Heart T-Light Holder and Jumbo Bag Red Retrospot both show steady, moderate demand with a slight Q1 dip likely a post-Christmas lull.
 
 ---
 
@@ -132,7 +132,7 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 - Repeat customers generate **£2,877 in lifetime revenue on average**, versus £418 for one-time customers — a ~6.9x difference.
 - Interestingly, the *per-order* value is almost identical between the two groups (£417 repeat vs. £418 one-time) — the entire lifetime-value gap comes from **purchase frequency**, not order size. This points toward retention and repeat-purchase campaigns as the higher-leverage lever, rather than trying to upsell bigger baskets.
 
-*(Note: the source data has no loyalty-programme flag, unlike some retail datasets — this repeat-purchase segmentation is a reasonable substitute built directly from order history, and is flagged here as a modelling choice rather than a field in the raw data.)*
+*(Note: the source data has no loyalty-programme flag, unlike some retail datasets this repeat-purchase segmentation is a reasonable substitute built directly from order history, and is flagged here as a modelling choice rather than a field in the raw data.)*
 
 ---
 
@@ -151,9 +151,9 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 | Nordics | £110,160 | 1.1% |
 | Eastern Europe | £10,582 | 0.1% |
 
-- The business is overwhelmingly UK-concentrated — expected for a "UK-based, non-store" retailer, but a concentration risk worth naming explicitly.
+- The business is overwhelmingly UK-concentrated expected for a "UK-based, non-store" retailer, but a concentration risk worth naming explicitly.
 - Western Europe is a distant but clear second market; Germany, France, and the Netherlands are the largest contributors within it.
-- Eastern Europe and the Nordics remain marginal — either an unexploited growth opportunity or evidence that international demand for this specific product range is genuinely UK/Western-Europe-centric.
+- Eastern Europe and the Nordics remain marginal either an unexploited growth opportunity or evidence that international demand for this specific product range is genuinely UK/Western-Europe-centric.
 
 ---
 
@@ -164,12 +164,12 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 - Validate whether the December AOV spike (£754) is a genuine wholesale pattern worth targeting with a B2B offer, or an artefact of the partial month.
 
 **Products**
-- Continue prioritising the Regency Cakestand and White Hanging Heart T-Light Holder — both show durable, non-seasonal demand.
+- Continue prioritising the Regency Cakestand and White Hanging Heart T-Light Holder both show durable, non-seasonal demand.
 - Plan Party Bunting inventory seasonally (build for Q2/Q3, don't over-stock for Q4).
-- Flag the Paper Craft, Little Birdie anomaly to data/finance — it materially distorts the "top products" ranking and should be excluded from any downstream reporting that isn't explicitly auditing edge cases.
+- Flag the Paper Craft, Little Birdie anomaly to data/finance it materially distorts the "top products" ranking and should be excluded from any downstream reporting that isn't explicitly auditing edge cases.
 
 **Cancellations**
-- Investigate fulfilment quality (packaging, breakage in transit) for the Cinderella Chandelier, Rococo Wall Mirror, and Savoy Art Deco Clock specifically — their cancellation rates are 2–3x the norm and they're all fragile, higher-value decorative pieces.
+- Investigate fulfilment quality (packaging, breakage in transit) for the Cinderella Chandelier, Rococo Wall Mirror, and Savoy Art Deco Clock specifically their cancellation rates are 2–3x the norm and they're all fragile, higher-value decorative pieces.
 - A 14.8% overall cancellation rate is high enough to warrant a root-cause review even outside the top offenders.
 
 **Customers**
@@ -177,7 +177,7 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 - Investigate whether high-AOV guest checkouts represent an underserved wholesale segment that would benefit from a dedicated B2B account flow.
 
 **Regions**
-- Given 85% UK concentration, evaluate whether Western Europe (the clear #2 market) merits a dedicated growth push — localised marketing, EU-specific shipping options — before spreading effort thinner across smaller Southern Europe/Nordics markets.
+- Given 85% UK concentration, evaluate whether Western Europe (the clear #2 market) merits a dedicated growth push — localised marketing, EU-specific shipping options before spreading effort thinner across smaller Southern Europe/Nordics markets.
 
 ---
 
@@ -197,7 +197,7 @@ One line item — *"PAPER CRAFT, LITTLE BIRDIE"* (stock code 23843) — shows an
 ├── visuals/                         # All chart PNGs used in this README
 ├── exports/                         # CSV exports of each analysis query, + cleaned .xlsx
 ├── requirements.txt
-├── .gitignore                       # Excludes large data files/db from git — see note below
+├── .gitignore                       # Excludes large data files/db from git see note below
 └── online_retail.db                 # SQLite database (schema + cleaned data)
 ```
 
